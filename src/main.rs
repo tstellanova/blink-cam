@@ -15,7 +15,7 @@ use eventcam_converter::conversion;
 use std::fs::create_dir_all;
 use std::path::Path;
 
-const MAX_FRAMES: u32 = 3599;
+const MAX_FRAMES: u32 = 10000; //3599;
 
 
 pub const RED_PIXEL: [u8; 3] = [255u8, 0, 0];
@@ -148,26 +148,29 @@ pub fn process_event_file(src_path: &str, img_w: u32, img_h: u32, render_out: bo
 
     let timebase:f64 = 0.003811000; //from slider events.txt file -- //TODO standardize
     let timescale:f64 = 1E-6; //one microsecond per SaeTime tick
+    let frame_time_delta:SaeTime = 1000; // 1 ms given the timescale above
+    let max_time_delta:SaeTime = 5*frame_time_delta;
+
     let event_list = conversion::read_next_chunk_sae_events(&mut buf_reader, timebase, timescale);
 
     if event_list.len() > 0 {
-      let matches:Vec<(SaeEvent,SaeEvent)> = process_events(&mut tracker, &mut sae_rise, &mut sae_fall, &event_list);
+      let _matches:Vec<(SaeEvent,SaeEvent)> = process_events(&mut tracker, &mut sae_rise, &mut sae_fall, &event_list);
 
       //TODO fix rendering
-      if render_out {
-        let lead_events = matches.iter().map(|(new, _old)| new.clone()).collect();
-        let out_img = render_corners(img_h, img_w, &lead_events);
-        let out_path = format!("./out/sae_{:04}_evts.png", chunk_count);
-        out_img.save(out_path).expect("Couldn't save");
-      }
-
 //      if render_out {
-//        let max_time_delta = 5*frame_time_delta;
-//        let horizon = timestamp.max(max_time_delta) - max_time_delta;
-//        let out_img = render_sae(img_h, img_w, &sae_rise, &sae_fall, horizon);
-//        let out_path = format!("./out/saesurf_{:04}.png", chunk_count);
+//        let lead_events = matches.iter().map(|(new, _old)| new.clone()).collect();
+//        let out_img = render_corners(img_h, img_w, &lead_events);
+//        let out_path = format!("./out/sae_{:04}_evts.png", chunk_count);
 //        out_img.save(out_path).expect("Couldn't save");
 //      }
+
+      if render_out {
+        let timestamp = event_list.first().unwrap().timestamp;
+        let horizon = timestamp.max(max_time_delta) - max_time_delta;
+        let out_img = render_sae(img_h, img_w, &sae_rise, &sae_fall, horizon);
+        let out_path = format!("./out/saesurf_{:04}.png", chunk_count);
+        out_img.save(out_path).expect("Couldn't save");
+      }
 
 //      if render_out {
 //        let out_path = format!("./out/sae_{:04}_tracks.png", chunk_count);
@@ -177,10 +180,12 @@ pub fn process_event_file(src_path: &str, img_w: u32, img_h: u32, render_out: bo
       
     }
     else {
+      println!("no more events after {} chunks", chunk_count);
       break;
     }
 
     if chunk_count > MAX_FRAMES {
+      println!("terminating after {} chunks", chunk_count);
       break;
     }
   }
