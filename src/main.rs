@@ -12,6 +12,8 @@ use arcstar::sae_types::*;
 use eventcam_tracker::tracker::FeatureTracker;
 
 use eventcam_converter::conversion;
+use std::fs::create_dir_all;
+use std::path::Path;
 
 const MAX_FRAMES: u32 = 3599;
 
@@ -136,24 +138,28 @@ pub fn process_event_file(src_path: &str, img_w: u32, img_h: u32, render_out: bo
 
   let mut tracker = Box::new(FeatureTracker::new());
 
+  //ensure that output directory exists
+  create_dir_all(Path::new("./out/")).expect("Couldn't create output dir");
+
 
   let mut chunk_count = 0;
   loop {
     chunk_count += 1;
 
-    let event_list = conversion::read_next_chunk_sae_events(&mut buf_reader);
+    let timebase:f64 = 0.003811000; //from slider events.txt file -- //TODO standardize
+    let timescale:f64 = 1E-6; //one microsecond per SaeTime tick
+    let event_list = conversion::read_next_chunk_sae_events(&mut buf_reader, timebase, timescale);
 
     if event_list.len() > 0 {
-      let _matches:Vec<(SaeEvent,SaeEvent)> = process_events(&mut tracker, &mut sae_rise, &mut sae_fall, &event_list);
+      let matches:Vec<(SaeEvent,SaeEvent)> = process_events(&mut tracker, &mut sae_rise, &mut sae_fall, &event_list);
 
       //TODO fix rendering
-//
-//      if render_out {
-//        let lead_events = matches.iter().map(|(new, _old)| new.clone()).collect();
-//        let out_img = render_corners(img_h, img_w, &lead_events);
-//        let out_path = format!("./out/sae_{:04}_evts.png", chunk_count);
-//        out_img.save(out_path).expect("Couldn't save");
-//      }
+      if render_out {
+        let lead_events = matches.iter().map(|(new, _old)| new.clone()).collect();
+        let out_img = render_corners(img_h, img_w, &lead_events);
+        let out_path = format!("./out/sae_{:04}_evts.png", chunk_count);
+        out_img.save(out_path).expect("Couldn't save");
+      }
 
 //      if render_out {
 //        let max_time_delta = 5*frame_time_delta;
