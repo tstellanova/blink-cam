@@ -15,7 +15,7 @@ use eventcam_converter::conversion;
 use std::fs::create_dir_all;
 use std::path::Path;
 
-const MAX_FRAMES: u32 = 10000; //3599;
+const MAX_FRAMES: u32 = 3599;
 
 
 pub const RED_PIXEL: [u8; 3] = [255u8, 0, 0];
@@ -67,11 +67,12 @@ pub fn render_sae(nrows: u32, ncols: u32, sae_rise: &SaeMatrix, sae_fall: &SaeMa
         let total_val = (sae_fall_val + sae_rise_val) as f32;
         let mut red_val: u8 = (255.0*(sae_rise_val as f32)/total_val) as u8;
         let mut green_val: u8 = (255.0*(sae_fall_val as f32)/total_val) as u8;
-        if red_val < 255 && green_val < 255 {
-          blue_val = 255;
-          red_val = 0;
-          green_val = 0;
-        }
+//        if red_val < 255 && green_val < 255 {
+//          // these are both rising and falling
+//          blue_val = 255;
+//          red_val = 0;
+//          green_val = 0;
+//        }
         let px_data: [u8; 3] = [red_val, green_val, blue_val];
         let px =  image::Rgb(px_data);
 
@@ -148,7 +149,7 @@ pub fn process_event_file(src_path: &str, img_w: u32, img_h: u32, render_out: bo
 
     let timebase:f64 = 0.003811000; //from slider events.txt file -- //TODO standardize
     let timescale:f64 = 1E-6; //one microsecond per SaeTime tick
-    let frame_time_delta:SaeTime = 1000; // 1 ms given the timescale above
+    let frame_time_delta:SaeTime = 10000; // 10 ms / 0.01 sec given the timescale above
     let max_time_delta:SaeTime = 5*frame_time_delta;
 
     let event_list = conversion::read_next_chunk_sae_events(&mut buf_reader, timebase, timescale);
