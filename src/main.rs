@@ -152,7 +152,11 @@ pub fn process_event_file(src_path: &str, img_w: u32, img_h: u32, render_out: bo
     let frame_time_delta:SaeTime = 10000; // 10 ms / 0.01 sec given the timescale above
     let max_time_delta:SaeTime = 5*frame_time_delta;
 
-    let event_list = conversion::read_next_chunk_sae_events(&mut buf_reader, timebase, timescale);
+    let event_list_opt = conversion::read_next_chunk_sae_events(&mut buf_reader, timebase, timescale);
+    if event_list_opt.is_none() {
+      break;
+    }
+    let event_list = event_list_opt.unwrap();
 
     if event_list.len() > 0 {
       let _matches:Vec<(SaeEvent,SaeEvent)> = process_events(&mut tracker, &mut sae_rise, &mut sae_fall, &event_list);
@@ -198,8 +202,8 @@ pub fn process_event_file(src_path: &str, img_w: u32, img_h: u32, render_out: bo
 
 fn main() {
   //TODO get image / SAE dimensions from configuration?
-  let img_w = 320;
-  let img_h = 320;
+  let img_w = 240;
+  let img_h = 180;
 
   process_event_file("./data/events.dat", img_w, img_h, true);
 
