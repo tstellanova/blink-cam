@@ -9,10 +9,12 @@ edition = "2018"
 rayon = "1.1.0"
 imageproc = "0.18.0"
 image = "0.21.1"
+clap = "2.33.0"
 
 
-[dependencies.eventcam_converter]
+[dependencies.eventcam-converter]
 path = "../eventcam-converter"
+#git = "https://github.com/tstellanova/eventcam-converter"
 
 [dependencies.arcstar]
 path = "../arcstar"
