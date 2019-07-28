@@ -1,4 +1,3 @@
-//use image::{ RgbImage };
 
 #[macro_use]
 extern crate clap;
@@ -62,13 +61,11 @@ pub fn process_event_file(src_path: &Path, img_w: u32, img_h: u32,  render_sae: 
         let out_path= format!("./out/sae_{:04}_tracks.png", chunk_count);
         tracker.render_tracks_to_file(horizon, &out_path);
       }
-      
     }
     else {
       println!("no more events after {} chunks", chunk_count);
       break;
     }
-
   }
 
 
