@@ -1,4 +1,4 @@
-use image::{ RgbImage };
+//use image::{ RgbImage };
 
 #[macro_use]
 extern crate clap;
@@ -10,36 +10,6 @@ use eventcam_tracker::tracker::FeatureTracker;
 use eventcam_converter::conversion;
 use std::fs::create_dir_all;
 use std::path::Path;
-
-const MAX_FRAMES: u32 = 3599;
-
-
-pub const RED_PIXEL: [u8; 3] = [255u8, 0, 0];
-pub const GREEN_PIXEL: [u8; 3] = [0, 255u8, 0];
-pub const YELLOW_PIXEL: [u8; 3] = [255u8, 255u8, 0];
-pub const BLUE_PIXEL: [u8; 3] = [0,0,  255u8];
-
-
-
-
-
-/// render corners into an image result
-pub fn render_corners(nrows: u32, ncols: u32, events: &Vec<SaeEvent> ) -> RgbImage {
-  let mut out_img =   RgbImage::new(ncols, nrows);
-
-  for evt in events {
-    let px = match evt.polarity {
-      1 => image::Rgb(YELLOW_PIXEL),
-      0 => image::Rgb(GREEN_PIXEL),
-      _ => unreachable!()
-    };
-
-    out_img.put_pixel(evt.col as u32, evt.row as u32, px);
-  }
-
-  out_img
-}
-
 
 
 /// process an event file into a set of corners
@@ -74,28 +44,20 @@ pub fn process_event_file(src_path: &Path, img_w: u32, img_h: u32,  render_sae: 
     let event_list = event_list_opt.unwrap();
 
     if event_list.len() > 0 {
-      let matches:Vec<(SaeEvent,SaeEvent)> = tracker.process_events(&event_list);
+      let corners:Vec<SaeEvent> = tracker.process_events(&event_list);
 
+      //TODO configure horizon based on command line options
       let timestamp = event_list.first().unwrap().timestamp;
       let horizon = timestamp.max(max_time_delta) - max_time_delta;
 
-      if render_matches {
-        let lead_events = matches.iter().map(|(new, _old)| new.clone()).collect();
-        let out_img = render_corners(img_h, img_w, &lead_events);
-        let out_path = format!("./out/sae_{:04}_evts.png", chunk_count);
-        out_img.save(out_path).expect("Couldn't save");
-      }
-
       if render_sae {
-        let out_img = tracker.render_sae_frame(horizon);
-        //let out_img = render_sae_frame(img_h, img_w, &sae_rise, &sae_fall, horizon);
         let out_path = format!("./out/saesurf_{:04}.png", chunk_count);
-        out_img.save(out_path).expect("Couldn't save");
+        tracker.render_sae_frame_to_file(horizon, &out_path);
       }
 
       if render_tracks {
-        let out_path = format!("./out/sae_{:04}_tracks.png", chunk_count);
-        tracker.render_tracks_to_file(img_h, img_w,  horizon, &out_path); //TODO check timestamp
+        let out_path= format!("./out/sae_{:04}_tracks.png", chunk_count);
+        tracker.render_tracks_to_file(horizon, &out_path);
       }
       
     }
@@ -104,10 +66,6 @@ pub fn process_event_file(src_path: &Path, img_w: u32, img_h: u32,  render_sae: 
       break;
     }
 
-    if chunk_count > MAX_FRAMES {
-      println!("terminating after {} chunks", chunk_count);
-      break;
-    }
   }
 
 
