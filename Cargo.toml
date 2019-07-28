@@ -7,18 +7,18 @@ edition = "2018"
 
 [dependencies]
 #imageproc = "0.18.0"
-image = "0.21.1"
+#image = "0.21.1"
 clap = "2.33.0"
 
 
 [dependencies.eventcam-converter]
-#path = "../eventcam-converter"
-git = "https://github.com/tstellanova/eventcam-converter"
+path = "../eventcam-converter"
+#git = "https://github.com/tstellanova/eventcam-converter"
 
 [dependencies.arcstar]
-#path = "../arcstar"
-git = "https://github.com/tstellanova/arcstar"
+path = "../arcstar"
+#git = "https://github.com/tstellanova/arcstar"
 
 [dependencies.eventcam-tracker]
-#path = "../eventcam-tracker"
-git = "https://github.com/tstellanova/eventcam-tracker"
+path = "../eventcam-tracker"
+#git = "https://github.com/tstellanova/eventcam-tracker"
