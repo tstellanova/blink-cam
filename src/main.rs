@@ -20,7 +20,11 @@ const MAX_TIME_DELTA:SaeTime = FRAME_TIME_DELTA;
 
 
 /// process an event file into a set of corners
-pub fn process_event_file(src_path: &Path, img_w: u32, img_h: u32,  render_sae: bool, render_tracks: bool) {
+pub fn process_event_file(src_path: &Path, img_w: u32, img_h: u32,
+                          render_events: bool,
+                          render_sae: bool,
+                          render_corners: bool,
+                          render_tracks: bool) {
 
   let event_file_res = std::fs::File::open(src_path);
   if event_file_res.is_err() {
@@ -42,7 +46,7 @@ pub fn process_event_file(src_path: &Path, img_w: u32, img_h: u32,  render_sae: 
     if event_list_opt.is_none() {
       break;
     }
-    let event_list = event_list_opt.unwrap();
+    let event_list:Vec<SaeEvent> = event_list_opt.unwrap();
 
     if event_list.len() > 0 {
       let corners:Vec<SaeEvent> = tracker.process_events(&event_list);
@@ -52,11 +56,18 @@ pub fn process_event_file(src_path: &Path, img_w: u32, img_h: u32,  render_sae: 
       let timestamp = event_list.first().unwrap().timestamp;
       let horizon = timestamp.max(MAX_TIME_DELTA) - MAX_TIME_DELTA;
 
+      if render_events {
+        let out_path = format!("./out/sae_{:04}_events.png", chunk_count);
+        tracker.render_events_to_file( &event_list, &FeatureTracker::RED_PIXEL, &FeatureTracker::BLUE_PIXEL, &out_path );
+      }
+      if render_corners {
+        let out_path = format!("./out/sae_{:04}_corners.png", chunk_count);
+        tracker.render_corners_to_file( &corners, &FeatureTracker::YELLOW_PIXEL, &FeatureTracker::GREEN_PIXEL, &out_path );
+      }
       if render_sae {
         let out_path = format!("./out/saesurf_{:04}.png", chunk_count);
         tracker.render_sae_frame_to_file(horizon, &out_path);
       }
-
       if render_tracks {
         let out_path= format!("./out/sae_{:04}_tracks.png", chunk_count);
         tracker.render_tracks_to_file(horizon, &out_path);
@@ -82,7 +93,9 @@ fn main() {
         (@arg INPUT: -i --input +takes_value  "Sets the input file to use: default is ./data/events.dat")
         (@arg WIDTH: --width +takes_value  "Sets the input width to use: default is 240 pixels")
         (@arg HEIGHT: --height +takes_value  "Sets the input height to use: default is 180 pixels")
+        (@arg RNDR_EVENTS: --rend_events  "Render events as they occur")
         (@arg RNDR_SAE: --rend_sae  "Render the Surface of Active Events (SAE)")
+        (@arg RNDR_CORNERS: --rend_corners  "Render corners as they're detected")
         (@arg RNDR_TRACKS: --rend_tracks   "Render feature matches as tracks:")
     ).get_matches();
 
@@ -92,10 +105,11 @@ fn main() {
   let img_w = matches.value_of("WIDTH").unwrap_or("240").parse::<u32>().unwrap();
   let img_h = matches.value_of("HEIGHT").unwrap_or("180").parse::<u32>().unwrap();
 
+  let render_events = matches.is_present("RNDR_EVENTS");
   let render_sae = matches.is_present("RNDR_SAE");
+  let render_corners = matches.is_present("RNDR_CORNERS");
   let render_tracks = matches.is_present("RNDR_TRACKS");
 
-  println!("render_tracks: {}", render_tracks);
 
   let in_path = Path::new(infile);
   if !in_path.exists() {
@@ -105,7 +119,7 @@ fn main() {
     println!("Reading from {}", infile);
   }
 
-  process_event_file(&in_path, img_w, img_h, render_sae, render_tracks);
+  process_event_file(&in_path, img_w, img_h, render_events, render_sae, render_corners, render_tracks);
 
 }
 
