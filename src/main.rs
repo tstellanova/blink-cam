@@ -10,11 +10,6 @@ use eventcam_converter::conversion;
 use std::fs::create_dir_all;
 use std::path::Path;
 
-//TODO allow time window to be defined from command line
-const TMAX_FORGETTING_TIME: SaeTime = (0.1 / 1E-6) as SaeTime;
-const FRAME_TIME_DELTA:SaeTime = TMAX_FORGETTING_TIME; // 10 ms / 0.01 sec given the timescale above
-const MAX_TIME_DELTA:SaeTime = FRAME_TIME_DELTA;
-
 
 /// process an event file into a set of corners
 /// # Arguments
@@ -47,7 +42,11 @@ pub fn process_event_file(src_path: &Path,
   }
   let event_file = event_file_res.unwrap();
   let mut event_reader = BufReader::new(event_file);
-  let mut tracker = Box::new(FeatureTracker::new(img_w, img_h, TMAX_FORGETTING_TIME));
+
+  let time_window = (0.1 / timescale) as SaeTime; //0.1 second
+  //TODO get reference time filter threshold from command line option?
+  let ref_time_filter = (50E-3 / timescale) as SaeTime; //50ms
+  let mut tracker = Box::new(FeatureTracker::new(img_w, img_h, time_window, ref_time_filter));
 
   //ensure that output directory exists
   create_dir_all(Path::new("./out/")).expect("Couldn't create output dir");
@@ -70,7 +69,7 @@ pub fn process_event_file(src_path: &Path,
 
       //TODO configure horizon based on command line options
       let timestamp = event_list.first().unwrap().timestamp;
-      let horizon = timestamp.max(MAX_TIME_DELTA) - MAX_TIME_DELTA;
+      let horizon = timestamp.max(time_window) - time_window;
 
       if render_events {
         let out_path = format!("./out/sae_{:04}_events.png", chunk_count);
