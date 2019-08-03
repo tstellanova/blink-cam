@@ -7,7 +7,7 @@ rm sae_events.mp4
 ffmpeg -r 24 \
  -f image2 \
  -start_number 1 \
- -i ./out/sae_%04d_events.png \
+ -i ./out/sae_events_%04d.png \
  -vcodec libx264 \
  -crf 25 \
  -pix_fmt yuv420p \

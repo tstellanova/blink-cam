@@ -72,19 +72,19 @@ pub fn process_event_file(src_path: &Path,
       let horizon = timestamp.max(time_window) - time_window;
 
       if render_events {
-        let out_path = format!("./out/sae_{:04}_events.png", chunk_count);
+        let out_path = format!("./out/sae_events_{:04}.png", chunk_count);
         tracker.render_events_to_file( &event_list, &FeatureTracker::RED_PIXEL, &FeatureTracker::BLUE_PIXEL, &out_path );
       }
-      if render_corners {
-        let out_path = format!("./out/sae_{:04}_corners.png", chunk_count);
-        tracker.render_corners_to_file( &corners, &FeatureTracker::YELLOW_PIXEL, &FeatureTracker::GREEN_PIXEL, &out_path );
-      }
       if render_sae {
-        let out_path = format!("./out/saesurf_{:04}.png", chunk_count);
+        let out_path = format!("./out/sae_surf_{:04}.png", chunk_count);
         tracker.render_sae_frame_to_file(horizon, &out_path);
       }
+      if render_corners {
+        let out_path = format!("./out/sae_corners_{:04}.png", chunk_count);
+        tracker.render_corners_to_file( &corners, &FeatureTracker::YELLOW_PIXEL, &FeatureTracker::GREEN_PIXEL, &out_path );
+      }
       if render_tracks {
-        let out_path= format!("./out/sae_{:04}_tracks.png", chunk_count);
+        let out_path= format!("./out/sae_tracks_{:04}.png", chunk_count);
         tracker.render_tracks_to_file(horizon, &out_path);
       }
     }
